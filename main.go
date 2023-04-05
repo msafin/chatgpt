@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 	"wxcloudrun-golang/db"
 	"wxcloudrun-golang/service"
 )
@@ -15,6 +16,7 @@ func main() {
 
 	http.HandleFunc("/", service.IndexHandler)
 	http.HandleFunc("/api/count", service.CounterHandler)
+	http.HandleFunc("/openai/chat", service.ChatHandler)
 
 	log.Fatal(http.ListenAndServe(":80", nil))
 }
