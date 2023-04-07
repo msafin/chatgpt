@@ -3,7 +3,10 @@ package service
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 type ChatReq struct {
@@ -40,5 +43,31 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%v", string(line))
 		w.Write(line)
 		flusher.Flush()
+	}
+}
+
+var upgrader = websocket.Upgrader{} // use default options
+
+func WssChatHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("upgrade:", err)
+		return
+	}
+
+	defer c.Close()
+
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			log.Println("read:", err)
+			break
+		}
+		log.Printf("recv: %s", message)
+		err = c.WriteMessage(mt, message)
+		if err != nil {
+			log.Println("write:", err)
+			break
+		}
 	}
 }
