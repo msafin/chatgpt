@@ -17,6 +17,7 @@ func main() {
 	http.HandleFunc("/", service.IndexHandler)
 	http.HandleFunc("/api/count", service.CounterHandler)
 	http.HandleFunc("/openai/chat", service.ChatHandler)
+	http.HandleFunc("/openai/wss-chat", service.WssChatHandler)
 
 	log.Fatal(http.ListenAndServe(":80", nil))
 }
