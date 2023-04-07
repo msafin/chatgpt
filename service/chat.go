@@ -1,30 +1,44 @@
 package service
 
 import (
-	"bytes"
-	"io"
+	"bufio"
+	"fmt"
 	"net/http"
 )
 
+type ChatReq struct {
+	Prompt  string `json:"prompt"`
+	Options struct {
+		ParentMessageID string `json:"parentMessageId"`
+	} `json:"options"`
+}
+
 func ChatHandler(w http.ResponseWriter, r *http.Request) {
-	//w.Write([]byte("{\"retcode\":0, \"retmsg\":\"ok\"}"))
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	data := `{"prompt":"清明节","options":{"parentMessageId":"chatcmpl-71mzBHp4w5gykvKAQtpcYin66SOhB"}}`
-	buf := bytes.NewBuffer([]byte(data))
-
-	rsp, err := http.Post("http://43.136.68.168:1002/", "application/json", buf)
+	rsp, err := http.Post("http://43.157.28.85:3004/chat-process", "application/json", r.Body)
 	if err != nil {
+		fmt.Printf("%v\n", err)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	body := rsp.Body
-	defer body.Close()
-	rspData, err := io.ReadAll(body)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
+	defer rsp.Body.Close()
+	reader := bufio.NewReader(rsp.Body)
 
-	w.Write(rspData)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return
+		}
+
+		fmt.Printf("%v", string(line))
+		w.Write(line)
+		flusher.Flush()
+	}
 }
